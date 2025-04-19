@@ -1,0 +1,90 @@
+{
+  "name": "img999",
+  "author": "dezign999",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "pebble-clay": "^1.0.4"
+  },
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "sdkVersion": "3",
+    "targetPlatforms": [
+      "basalt",
+      "aplite",
+      "diorite"
+    ],
+    "enableMultiJS": true,
+    "capabilities": [
+      "configurable"
+    ],
+    "projectType": "native",
+    "displayName": "img999",
+    "uuid": "89f646d5-51b3-4933-ace1-463a61a759bf",
+    "watchapp": {
+      "watchface": true,
+      "hiddenApp": false,
+      "onlyShownOnCommunication": false
+    },
+    "resources": {
+      "media": [
+        {
+          "characterRegex": "[0-9]",
+          "file": "fonts/font.ttf",
+          "name": "FONT_80",
+          "type": "font"
+        },
+        {
+          "characterRegex": "[0-9]",
+          "file": "fonts/font_2.ttf",
+          "name": "FONT_29",
+          "type": "font"
+        },
+        {
+          "file": "images/grad_0.png",
+          "name": "GRADIENT_0",
+          "type": "png"
+        },
+        {
+          "file": "images/grad_1.png",
+          "name": "GRADIENT_1",
+          "type": "png"
+        },
+        {
+          "file": "images/grad_2.png",
+          "name": "GRADIENT_2",
+          "type": "png"
+        },
+        {
+          "file": "images/grad_3.png",
+          "name": "GRADIENT_3",
+          "type": "png"
+        },
+        {
+          "file": "images/ico.png",
+          "menuIcon": true,
+          "name": "icon",
+          "type": "png"
+        }
+      ]
+    },
+   "messageKeys": [
+      "chunk",
+      "background",
+      "hourlyvibe",
+      "index",
+      "message",
+      "size",
+      "url",
+      "hourColor",
+      "minuteColor",
+      "gradient",
+      "gradColor",
+      "comp1",
+      "comp2",
+      "layout"
+    ]
+  }
+}
