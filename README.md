@@ -13,6 +13,12 @@ The current image is stored on your phone until a new image is downloaded, this 
 ### Theme Sharing
 Share your theme with others by copying the custom theme code at the bottom of the settings page. Make sure to save your settings first to ensure your theme code is updated correctly.
 
+### Applying a Theme
+Copy a theme code and ensure it ends in "999" to work correctly. Paste it into the URL box in the img999 settings page and save the changes to see the results. Complications are not shared as they are set to a user's personal preference. Therefore, your complications will persist and only the colors, layout and image will change.
+
+Try this Yoshi theme:   
+```https://i.postimg.cc/vBbCbz0y/5451-F0-D6-D70-F-4-EBC-A335-EBFE8362767-C.jpg*16777215*16755370*2*21760*0*999```
+
 ### Image Hosting
 It's recommended that you create a free user account at http://postimages.org to host your images. Creating an account allows you to create image libraries that you can copy direct links to directly from the Pebble settings page.
 
@@ -20,4 +26,3 @@ When uploading images to Postimages.org, make sure to set the option to enable i
 
 ### Image Formatting
 Setting up your image is easy to do right from your phone. Use the default editing app and crop your image to a 4:5 ratio to fit your Pebble. You may also want to adjust your contrast to darken the image slightly for the Pebble display.
-
