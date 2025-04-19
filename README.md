@@ -20,7 +20,7 @@ Try this Yoshi theme:
 ```https://i.postimg.cc/vBbCbz0y/5451-F0-D6-D70-F-4-EBC-A335-EBFE8362767-C.jpg*16777215*16755370*2*21760*0*999```
 
 ### Image Hosting
-It's recommended that you create a free user account at http://postimages.org to host your images. Creating an account allows you to create image libraries that you can copy direct links to directly from the Pebble settings page.
+It's recommended that you create a free user account at http://postimages.org to host your images. Creating an account allows you to manage image libraries that you can copy direct links to directly from the Pebble settings page.
 
 When uploading images to Postimages.org, make sure to set the option to enable image resizign to 320x240. This will scale the image and make it more suitable for downloading to the Pebble. Images should be less than 500px by 500px.
 
