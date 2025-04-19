@@ -1,5 +1,5 @@
 # img999
-Customizable watch face for Pebble using your own images.
+Customizable watch face for Pebble Time, Pebble 2 and Pebble Classic which uses your own images.
 
 This uses resources from:  
 Gregoiresage's Image Viewer: https://github.com/gregoiresage/pebble-image-viewer/  
