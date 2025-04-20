@@ -22,7 +22,7 @@ Try this Yoshi theme:
 ### Image Hosting
 It's recommended that you create a free user account at http://postimages.org to host your images. Creating an account allows you to manage image libraries that you can copy direct links to directly from the Pebble settings page.
 
-When uploading images to Postimages.org, make sure to set the option to enable image resizign to 320x240. This will scale the image and make it more suitable for downloading to the Pebble. Images should be less than 500px by 500px.
+When uploading images to Postimages.org, make sure to set the option to enable image resizing to 320x240. This will scale the image and make it more suitable for downloading to the Pebble. Images should be less than 500px by 500px.
 
 ### Image Formatting
 Setting up your image is easy to do right from your phone. Use the default editing app and crop your image to a 4:5 ratio to fit your Pebble. You may also want to adjust your contrast to darken the image slightly for the Pebble display.
