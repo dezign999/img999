@@ -195,24 +195,30 @@ static void updateLayout() {
 
 }
 
+static void gbitmap_destroy_safe(GBitmap **bitmap) {
+    if (*bitmap) {
+        gbitmap_destroy(*bitmap);
+        *bitmap = NULL;
+    }
+}
+
 static void updateGradient() {
+
+	gbitmap_destroy_safe(&gradient);
 
 	if (settings.gradient == 49) {
 		bitmap_layer_set_background_color(gradient_layer, settings.gradColor);
+		#ifdef PBL_BW
+			bitmap_layer_set_bitmap(gradient_layer, gradient);
+			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpAssign);
+		#endif
 	} else {
 		bitmap_layer_set_background_color(gradient_layer, GColorClear);
 	}	
 
-	if (gradient != NULL) {
-		gbitmap_destroy(gradient);
-		gradient = NULL;
-	}
-
 	switch (settings.gradient) {
 		case 50:
-			#ifdef PBL_PLATFORM_DIORITE
-				gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_2);
-			#elif PBL_PLATFORM_APLITE
+			#ifdef PBL_BW
 				if (settings.layout == 50 || settings.layout == 51) {
 					gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_2);
 				} else {
@@ -228,9 +234,7 @@ static void updateGradient() {
 			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpSet);
 			break;
 		case 51:
-			#ifdef PBL_PLATFORM_DIORITE
-				gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_3);
-			#elif PBL_PLATFORM_APLITE
+			#ifdef PBL_BW
 			if (settings.layout == 50 || settings.layout == 51) {
 				gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_3);
 			} else {
@@ -350,14 +354,8 @@ static void updateLayers() {
 		
 		
 		if (settings.gradient == 48) {
-			if (gradient != NULL) {
-				gbitmap_destroy(gradient);
-				gradient = NULL;
-			}
 
-			#ifdef PBL_PLATFORM_DIORITE
-				gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_2);
-			#endif
+			gbitmap_destroy_safe(&gradient);
 
 			#ifdef PBL_PLATFORM_BASALT
 				gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_0);
@@ -414,7 +412,7 @@ static void updateLayers() {
 		window_set_background_color(window, GColorBlack);
 		layer_set_hidden(bitmap_layer_get_layer(image_layer), false);
 		
-		#ifdef PBL_PLATFORM_APLITE
+		#ifdef PBL_BW
 			switch (settings.layout) {
 				case 48:
 					bitmap_layer_set_alignment(gradient_layer, GAlignLeft);
@@ -440,8 +438,15 @@ static void updateLayers() {
 		layer_set_frame(text_layer_get_layer(date_text_layer), GRect(comp2_x, comp2_y, comp2_width, comp2_height));
 		layer_set_frame(text_layer_get_layer(day_text_layer), GRect(comp1_x, comp1_y, comp1_width, comp1_height));
 		
-		#ifdef PBL_PLATFORM_APLITE
-		layer_set_frame(bitmap_layer_get_layer(gradient_layer), GRect(0, 0, 144, 168));
+		#ifdef PBL_BW
+		if (settings.gradient == 49) {
+			layer_set_frame(bitmap_layer_get_layer(gradient_layer), GRect(gradient_x, gradient_y, 144, 168));
+			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpAssign);
+			layer_mark_dirty(bitmap_layer_get_layer(gradient_layer));
+		} else {
+			layer_set_frame(bitmap_layer_get_layer(gradient_layer), GRect(0, 0, 144, 168));
+			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpSet);
+		}
 		#else
 			layer_set_frame(bitmap_layer_get_layer(gradient_layer), GRect(gradient_x, gradient_y, 144, 168));
 		#endif
@@ -528,31 +533,13 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	hourlyvibe_tuple ? settings.hourlyvibe = (hourlyvibe_tuple->value->uint8) : false;
 
 	Tuple *hourColor_tuple = dict_find(iterator, MESSAGE_KEY_hourColor);
-	#ifdef PBL_COLOR
-		hourColor_tuple ? settings.hourColor = GColorFromHEX(hourColor_tuple->value->int32) : GColorWhite;
-	#else
-		settings.hourColor = (hourColor_tuple && strlen(hourColor_tuple->value->cstring) < 8) 
-			? GColorBlack 
-			: GColorWhite;
-	#endif
+	hourColor_tuple ? settings.hourColor = GColorFromHEX(hourColor_tuple->value->int32) : GColorWhite;
 
 	Tuple *minuteColor_tuple = dict_find(iterator, MESSAGE_KEY_minuteColor);
-	#ifdef PBL_COLOR
-		minuteColor_tuple ? settings.minuteColor = GColorFromHEX(minuteColor_tuple->value->int32) : GColorWhite;
-	#else
-		settings.minuteColor = (minuteColor_tuple && strlen(minuteColor_tuple->value->cstring) < 8) 
-			? GColorBlack 
-			: GColorWhite;
-	#endif
+	minuteColor_tuple ? settings.minuteColor = GColorFromHEX(minuteColor_tuple->value->int32) : GColorWhite;
 
 	Tuple *gradColor_tuple = dict_find(iterator, MESSAGE_KEY_gradColor);
-	#ifdef PBL_COLOR
-		gradColor_tuple ? settings.gradColor = GColorFromHEX(gradColor_tuple->value->int32) : GColorBlack;
-	#else
-		settings.gradColor = (gradColor_tuple && strlen(gradColor_tuple->value->cstring) < 8) 
-			? GColorBlack 
-			: GColorWhite;
-	#endif
+	gradColor_tuple ? settings.gradColor = GColorFromHEX(gradColor_tuple->value->int32) : GColorBlack;
 
 	Tuple *gradient_tuple = dict_find(iterator, MESSAGE_KEY_gradient);
 	gradient_tuple ? settings.gradient = (gradient_tuple->value->int32) : 48;
@@ -835,20 +822,26 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(day_text_layer, settings.hourColor);
 	text_layer_set_font(day_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
 
-	#ifdef PBL_PLATFORM_DIORITE
-		gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_2);
-	#else
+	#ifdef PBL_BW
 		gradient = gbitmap_create_with_resource(RESOURCE_ID_GRADIENT_0);
 	#endif
 
-	#ifdef PBL_PLATFORM_APLITE
+	#ifdef PBL_BW
 		gradient_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
 	#else
 		gradient_layer = bitmap_layer_create(GRect((!settings.layout) ? -94 : 93, 0, 144, 168));
 	#endif
 
 	bitmap_layer_set_bitmap(gradient_layer, gradient);
-	bitmap_layer_set_compositing_mode(gradient_layer, GCompOpSet);
+	#ifdef PBL_BW
+		if (settings.gradient == 49) {
+			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpAssign);
+		} else {
+			bitmap_layer_set_compositing_mode(gradient_layer, GCompOpSet);
+		}
+	#else
+		bitmap_layer_set_compositing_mode(gradient_layer, GCompOpSet);
+	#endif
 
 	#ifdef PBL_COLOR
 		gbitmap_fill_all_except(GColorClear, settings.gradColor, true, gradient, gradient_layer);
@@ -881,14 +874,8 @@ static void window_unload(Window *window) {
 		free(data_image);
 		data_image = NULL;
 	}
-	if(image){
-		gbitmap_destroy(image);
-		image = NULL;
-	}
-	if(gradient){
-		gbitmap_destroy(gradient);
-		gradient = NULL;
-	}
+	gbitmap_destroy_safe(&image);
+	gbitmap_destroy_safe(&gradient);
 	fonts_unload_custom_font(time_font);
 	bitmap_layer_destroy(image_layer);
 	bitmap_layer_destroy(gradient_layer);
