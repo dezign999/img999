@@ -181,24 +181,22 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   clay.getSettings(e.response, false);  // This triggers the update in localStorage
   app.settings = JSON.parse(localStorage.getItem('clay-settings'));
-  var url = app.settings.url;
+  var url = app.settings.url.trim();
   oldurl = JSON.parse(localStorage.getItem('oldurl'));
+  var lowercaseUrl = url.toLowerCase();
   sendMessage({ "message": "Received Changes" }, null, null);
 
   if (url !== oldurl && url !== "") {
 
-    if (endsWith(url, ".jpg") || endsWith(url, ".jpeg") || endsWith(url, ".JPG") || endsWith(url, ".JPEG") || 
-        endsWith(url, ".png") || endsWith(url, ".PNG")) {
-
+    if (endsWith(lowercaseUrl, ".jpg") || endsWith(lowercaseUrl, ".jpeg") || endsWith(lowercaseUrl, ".png")) {
+      
       sendMessage({ "message": "Loading Image" }, null, null);
       localStorage.setItem('oldurl', JSON.stringify(url));
-      getImage(url);
-
       Pebble.sendAppMessage(app.settings, function(e) { }, function(e) { });
+      getJpegImage(url);
 
-    }
-    
-    if (endsWith(url, "*999")) {
+    } else if (endsWith(lowercaseUrl, "*999")) {
+      
       sendMessage({ "message": "Loading Theme" }, null, null);
       send = 0;
       var parts = url.split("*");
@@ -209,8 +207,6 @@ Pebble.addEventListener('webviewclosed', function(e) {
       sGradient = parts[3];
       sGradColor = parseInt(parts[4], 10);
       sLayout = parts[5];
-      
-      getImage(sUrl);
 
       const payload = {
         "hourlyVibe": app.settings.hourlyVibe,
@@ -223,7 +219,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
         "comp2": app.settings.comp2,
         "layout": sLayout,
       };
-    
+
       // Save the payload to localStorage
       localStorage.setItem('clay-settings', JSON.stringify(payload));
       localStorage.setItem('oldurl', JSON.stringify(sUrl));
@@ -234,9 +230,12 @@ Pebble.addEventListener('webviewclosed', function(e) {
           sendMessage({ "message": "" }, null, null);
       }, function(e) { });
 
+      getJpegImage(sUrl);
+    
     } else {
-      sendMessage({ "message": "Error : Bad Direct Link" }, null, null);
+        sendMessage({ "message": "Error : Bad Direct Link" }, null, null);
     }
+
   } else {
     Pebble.sendAppMessage(app.settings, function(e) { 
       sendMessage({ "message": "" }, null, null);
