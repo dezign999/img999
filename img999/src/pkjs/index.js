@@ -130,15 +130,6 @@ function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
-function getImage(url) {
-
-    if (endsWith(url, ".jpg") || endsWith(url, ".jpeg") || endsWith(url, ".JPG") || endsWith(url, ".JPEG") || endsWith(url, ".png") || endsWith(url, ".PNG")) {
-        getJpegImage(url);
-    } else {
-        sendMessage({ "message": "Error : Bad Direct Link" }, null, null);
-    }
-}
-
 Pebble.addEventListener("ready", function (e) {
 
   cachedBitmap = localStorage.getItem("cachedBitmap");
@@ -151,7 +142,7 @@ Pebble.addEventListener("ready", function (e) {
     if (oldurl === null || oldurl == "")
       oldurl = defaultUrl;
     localStorage.setItem('oldurl', JSON.stringify(oldurl));
-    getImage(oldurl);
+    getJpegImage(oldurl);
   }
 });
 
