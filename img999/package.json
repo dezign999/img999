@@ -73,7 +73,7 @@
    "messageKeys": [
       "chunk",
       "background",
-      "hourlyvibe",
+      "hourlyVibe",
       "index",
       "message",
       "size",
@@ -84,7 +84,10 @@
       "gradColor",
       "comp1",
       "comp2",
-      "layout"
+      "layout",
+      "startTime",
+      "endTime",
+      "vibeStrong"
     ]
   }
 }
