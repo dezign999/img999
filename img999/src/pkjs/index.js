@@ -23,6 +23,8 @@ var sMinuteColor;
 var sGradient;
 var sGradColor;
 var sLayout;
+var platformCache;
+var platformCurrent;
 
 function sendBitmap(bitmap){
   var i = 0;
@@ -78,12 +80,16 @@ function convertImage(rgbaPixels, numComponents, width, height){
   var bitmap = [];
 
   if(watch_info.platform === 'aplite' || watch_info.platform === 'diorite') {
+    platformCurrent = 1;
+    localStorage.setItem('platformCache', JSON.stringify(platformCurrent));
     var grey_pixels = image_tools.greyScale(rgbaPixels, width, height, numComponents);
     image_tools.ScaleRect(final_pixels, grey_pixels, width, height, final_width, final_height, 1);
     dithering.floydSteinberg(final_pixels, final_width, final_height, dithering.pebble_nearest_color_to_black_white);
     bitmap = pebble.toPBI(final_pixels, final_width, final_height);
   }
   else {
+    platformCurrent = 2;
+    localStorage.setItem('platformCache', JSON.stringify(platformCurrent));
     image_tools.ScaleRect(final_pixels, rgbaPixels, width, height, final_width, final_height, numComponents);
     dithering.floydSteinberg(final_pixels, final_width, final_height, dithering.pebble_nearest_color_to_pebble_palette);
     var png = Png4Pebble.png(final_width, final_height, final_pixels);
@@ -131,16 +137,31 @@ function endsWith(str, suffix) {
 }
 
 Pebble.addEventListener("ready", function (e) {
+  var watch_info;
+  if(Pebble.getActiveWatchInfo) {
+    watch_info = Pebble.getActiveWatchInfo() || { 'platform' : 'aplite'};
+    if(watch_info.platform === 'aplite' || watch_info.platform === 'diorite') {
+      platformCurrent = 1; 
+    } else {
+    // console.log('Pebble.getActiveWatchInfo() ->', JSON.stringify(watch_info));
+      platformCurrent = 2;
+    }
+  } else {
+    watch_info = { 'platform' : 'aplite'};
+    platformCurrent = 1;
+  }
 
   cachedBitmap = localStorage.getItem("cachedBitmap");
+  platformCache = JSON.parse(localStorage.getItem('platformCache'));
 
-  if (cachedBitmap) {
+  if (cachedBitmap && platformCache == platformCurrent) {
     sendMessage({ "message": "Loading Cache" }, null, null);
     var bitmap = JSON.parse(cachedBitmap);
     sendBitmap(bitmap); // Send the cached bitmap directly
   } else {
     if (oldurl === null || oldurl == "")
       oldurl = defaultUrl;
+    sendMessage({ "message": "Updating Image" }, null, null);
     localStorage.setItem('oldurl', JSON.stringify(oldurl));
     getJpegImage(oldurl);
   }

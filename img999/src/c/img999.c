@@ -1,6 +1,9 @@
 #include <pebble.h>
 #include <ctype.h>
 #include "img999.h"
+#include "health.h"
+#include "updateLayout.h"
+#include "complications.h"
 #ifdef PBL_COLOR
 	#include "gbitmap_color_palette_manipulator.h"
 #endif
@@ -21,6 +24,10 @@ TextLayer 				*date_text_layer;
 TextLayer 				*day_text_layer;
 static uint8_t      	*data_image = NULL;
 static uint32_t     	data_size;
+AppTimer 				*vibration_timer;
+int 					loopCounter = 0;
+int 					loopCount = 0;
+int 					quarterLoop;
 static char 			dateText[6];
 static char 			day_buffer[4];
 static char 			dayDate_buffer[8];
@@ -28,6 +35,7 @@ static char 			month_buffer[4];
 static char 			steps_buffer[8];
 static char 			short_date_buffer[8];
 static bool 			isObstructed = false;
+bool 					vibration_timer_active = false;
 static const uint8_t 	minute_start = 62;
 static const uint8_t 	minute_end = 6;
 static const uint8_t 	hour_start = 96;
@@ -38,9 +46,6 @@ static const uint8_t 	hour_start_L = 3;
 static const uint8_t 	hour_end_L = 50;
 static const uint8_t 	horiz_time_end = 40;
 static ClaySettings 	settings;
-bool 					health_is_available();
-static bool 			s_health_available;
-int 					health_get_metric_sum(HealthMetric metric);
 static int 				hour_x, hour_y, hour_width, hour_height, minute_x,  minute_y, minute_width, minute_height,
 						comp1_x, comp1_y, comp1_width, comp1_height, comp2_x, comp2_y, comp2_width, comp2_height,
 						gradient_x, gradient_y;
@@ -63,136 +68,51 @@ static int 				hour_x, hour_y, hour_width, hour_height, minute_x,  minute_y, min
 #define INFO_Y 64
 #endif
 
-const VibePattern vibe_pattern = {
-	.durations = (uint32_t []) {50, 20, 50, 300},
-		.num_segments = 4
+static const uint32_t vibe_durations_strong[] = {100};
+static const uint32_t vibe_durations_weak[] = {50};
+static int vibration_delay = 600;
+
+const VibePattern vibe_pattern_strong = {
+    .durations = (uint32_t *)vibe_durations_strong,
+    .num_segments = 1
 };
 
-static void updateLayout() {
+const VibePattern vibe_pattern_weak = {
+    .durations = (uint32_t *)vibe_durations_weak,
+    .num_segments = 1
+};
 
-	switch (settings.layout) {
-		case 48:
-			hour_x = 3;
-			hour_y = 2;
-			hour_width = 50;
-			hour_height = 80;
+VibePattern get_vibe_pattern() {
+    return settings.vibeStrong ? vibe_pattern_weak : vibe_pattern_strong;
+}
 
-			minute_x = 3;
-			minute_y = 62;
-			minute_width = 50;
-			minute_height = 80;
+// Populate layout values from settings and copy into local variables used by this file.
+static void apply_layout_from_settings() {
+	LayoutValues lv;
+	updateLayout(&settings, &lv);
 
-			comp1_x = 1;
-			comp1_y = (settings.comp1 == 51) ? 8 : -2;
-			comp1_width = 48;
-			comp1_height = 26;
+	hour_x = lv.hour_x;
+	hour_y = lv.hour_y;
+	hour_width = lv.hour_width;
+	hour_height = lv.hour_height;
 
-			comp2_x = 1;
-			comp2_y = (settings.comp2 == 51) ? 142 : 136;
-			comp2_width = 48;
-			comp2_height = 26;
+	minute_x = lv.minute_x;
+	minute_y = lv.minute_y;
+	minute_width = lv.minute_width;
+	minute_height = lv.minute_height;
 
-			gradient_x = -94;
-			gradient_y = 0;
-			break;
-		case 49:
-			hour_x = 96;
-			hour_y = 2;
-			hour_width = 50;
-			hour_height = 80;
+	comp1_x = lv.comp1_x;
+	comp1_y = lv.comp1_y;
+	comp1_width = lv.comp1_width;
+	comp1_height = lv.comp1_height;
 
-			minute_x = 96;
-			minute_y = 62;
-			minute_width = 50;
-			minute_height = 80;
+	comp2_x = lv.comp2_x;
+	comp2_y = lv.comp2_y;
+	comp2_width = lv.comp2_width;
+	comp2_height = lv.comp2_height;
 
-			comp1_x = 94;
-			comp1_y = (settings.comp1 == 51) ? 8 : -2;
-			comp1_width = 48;
-			comp1_height = 26;
-
-			comp2_x = 94;
-			comp2_y = (settings.comp2 == 51) ? 142 : 136;
-			comp2_width = 48;
-			comp2_height = 26;
-
-			gradient_x = 93;
-			gradient_y = 0;
-			break;
-		case 50:
-			hour_x = 44;
-			hour_y = -4;
-			hour_width = 30;
-			hour_height = 30;
-
-			minute_x = 75;
-			minute_y = -4;
-			minute_width = 30;
-			minute_height = 30;
-
-			comp1_x = 3;
-			comp1_y = (settings.comp1 == 51) ? 4 : -3;
-			comp1_width = 40;
-			comp1_height = 26;
-
-			comp2_x = 100;
-			comp2_y = (settings.comp2 == 51) ? 4 : -3;
-			comp2_width = 40;
-			comp2_height = 26;
-
-			gradient_x = 0;
-			gradient_y = -138;
-			break;
-		case 51:
-			hour_x = 44;
-			hour_y = 136;
-			hour_width = 30;
-			hour_height = 30;
-
-			minute_x = 75;
-			minute_y = 136;
-			minute_width = 30;
-			minute_height = 30;
-
-			comp1_x = 3;
-			comp1_y = (settings.comp1 == 51) ? 144 : 138;
-			comp1_width = 40;
-			comp1_height = 26;
-
-			comp2_x = 100;
-			comp2_y = (settings.comp2 == 51) ? 144 : 138;
-			comp2_width = 40;
-			comp2_height = 26;
-			
-			gradient_x = 0;
-			gradient_y = 138;
-			break;
-		default:
-			hour_x = 3;
-			hour_y = 2;
-			hour_width = 50;
-			hour_height = 80;
-
-			minute_x = 3;
-			minute_y = 62;
-			minute_width = 50;
-			minute_height = 80;
-
-			comp1_x = 1;
-			comp1_y = (settings.comp1 == 51) ? 8 : -2;
-			comp1_width = 48;
-			comp1_height = 26;
-
-			comp2_x = 1;
-			comp2_y = (settings.comp2 == 51) ? 142 : 136;
-			comp2_width = 48;
-			comp2_height = 26;
-
-			gradient_x = -94;
-			gradient_y = 0;
-		break;
-	}	
-
+	gradient_x = lv.gradient_x;
+	gradient_y = lv.gradient_y;
 }
 
 static void gbitmap_destroy_safe(GBitmap **bitmap) {
@@ -263,63 +183,10 @@ static void updateGradient() {
 
 }
 
-static void updateComplications() {
-
-	text_layer_set_font(day_text_layer, fonts_get_system_font((settings.comp1 == 51) ? FONT_KEY_GOTHIC_14_BOLD : FONT_KEY_GOTHIC_24_BOLD));
-	text_layer_set_font(date_text_layer, fonts_get_system_font((settings.comp2 == 51) ? FONT_KEY_GOTHIC_14_BOLD : FONT_KEY_GOTHIC_24_BOLD));
-
-	switch (settings.comp2) {
-		case 49:
-			text_layer_set_text(date_text_layer, day_buffer);
-			break;
-		case 50:
-			text_layer_set_text(date_text_layer, dateText);
-			break;
-		case 51:
-			text_layer_set_text(date_text_layer, dayDate_buffer);
-			break;
-		case 52:
-			text_layer_set_text(date_text_layer, month_buffer);
-			break;
-		case 53:
-			text_layer_set_text(date_text_layer, short_date_buffer);
-			break;
-		case 54:
-			text_layer_set_text(date_text_layer, steps_buffer);
-			break;
-		default:
-			layer_set_hidden(text_layer_get_layer(date_text_layer), true);
-			break;
-	}
-
-	switch (settings.comp1) {
-		case 49:
-			text_layer_set_text(day_text_layer, day_buffer);
-			break;
-		case 50:
-			text_layer_set_text(day_text_layer, dateText);
-			break;
-		case 51:
-			text_layer_set_text(day_text_layer, dayDate_buffer);
-			break;
-		case 52:
-			text_layer_set_text(day_text_layer, month_buffer);
-			break;
-		case 53:
-			text_layer_set_text(day_text_layer, short_date_buffer);
-			break;
-		case 54:
-			text_layer_set_text(day_text_layer, steps_buffer);
-			break;
-		default:
-			layer_set_hidden(text_layer_get_layer(day_text_layer), true);
-			break;
-	}
-
-}
+// updateComplications() moved to its own module.
 
 static void updateLayers() {
-	updateLayout();
+	apply_layout_from_settings();
 
 	if (settings.layout == 48 || settings.layout == 49) {
 		if (time_font)
@@ -455,13 +322,13 @@ static void updateLayers() {
 		
 	}
 	
-	updateComplications();
+	updateComplications(&settings, day_text_layer, date_text_layer, day_buffer, dateText, dayDate_buffer, month_buffer, short_date_buffer, steps_buffer);
 	updateGradient();
 
 }
 
 static void load_default_settings() {
-	settings.hourlyvibe = 	1;
+	settings.hourlyVibe = 	0;
 	settings.background = 	1;
 	settings.gradient = 	48;
 	settings.gradColor = 	GColorBlack;
@@ -470,6 +337,9 @@ static void load_default_settings() {
 	settings.hourColor = 	GColorWhite;
 	settings.minuteColor = 	GColorWhite;
 	settings.layout = 		48;
+	settings.startTime = 	7;
+    settings.endTime = 		22;
+    settings.vibeStrong = 	false;
 }
 
 static void load_persistent_settings() {
@@ -529,8 +399,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	Tuple *background_tuple = dict_find(iterator, MESSAGE_KEY_background);
 	background_tuple ? settings.background = (background_tuple->value->uint8) : false;	
 	
-	Tuple *hourlyvibe_tuple = dict_find(iterator, MESSAGE_KEY_hourlyvibe);
-	hourlyvibe_tuple ? settings.hourlyvibe = (hourlyvibe_tuple->value->uint8) : false;
+	Tuple *hourlyVibe_tuple = dict_find(iterator, MESSAGE_KEY_hourlyVibe);
+	hourlyVibe_tuple ? settings.hourlyVibe = atoi(hourlyVibe_tuple->value->cstring) : 0;
 
 	Tuple *hourColor_tuple = dict_find(iterator, MESSAGE_KEY_hourColor);
 	hourColor_tuple ? settings.hourColor = GColorFromHEX(hourColor_tuple->value->int32) : GColorWhite;
@@ -553,89 +423,73 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 	Tuple *layout_tuple = dict_find(iterator, MESSAGE_KEY_layout);
 	layout_tuple ? settings.layout = (layout_tuple->value->int32) : 48;
 
+	Tuple *startTime_tuple = dict_find(iterator, MESSAGE_KEY_startTime);
+    startTime_tuple ? settings.startTime = (startTime_tuple->value->int32) : 7;
+
+    Tuple *endTime_tuple = dict_find(iterator, MESSAGE_KEY_endTime);
+    endTime_tuple ? settings.endTime = (endTime_tuple->value->int32) : 22;
+
+	Tuple *vibeStrong_tuple = dict_find(iterator, MESSAGE_KEY_vibeStrong);
+    vibeStrong_tuple ? settings.vibeStrong = atoi(vibeStrong_tuple->value->cstring) : 0;
+
 	persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
 
 	layer_mark_dirty(bitmap_layer_get_layer(image_layer));
 	updateLayers();
-	
+    
 }
 
-bool health_is_available() {
-	return s_health_available;
-  }
-  
-int health_get_metric_sum(HealthMetric metric) {
-	HealthServiceAccessibilityMask mask = health_service_metric_accessible(metric,
-	  time_start_of_today(), time(NULL));
-	if(mask == HealthServiceAccessibilityMaskAvailable) {
-	  return (int)health_service_sum_today(metric);
-	} else {
-	  return 0;
-	}
-  }
+#include "health.h"
 
-void abbrevSteps(int num, char* result) {
-    for (int i = 0; i < 7; i++) {
-        result[i] = '\0';
-    }
-    if (num == 0) {
-        result[0] = '0';
-        return;
-    }
-    char temp[10];
-    int digitCount = 0;
-    int tempNum = num;
-    while (tempNum > 0 && digitCount < 10) {
-        temp[digitCount] = (tempNum % 10) + '0';
-        tempNum /= 10;
-        digitCount++;
-    }
-    if (digitCount <= 3) {
-        for (int i = 0; i < digitCount; i++) {
-            result[i] = temp[digitCount - 1 - i];
-        }
-        return;
-    }
-    if (digitCount == 4) {
-        result[0] = temp[3];
-        if (temp[2] != '0') {
-            result[1] = '.';
-            result[2] = temp[2];
-            result[3] = 'k';
-        } else {
-            result[1] = 'k';
-        }
-        return;
-    }
-    if (digitCount == 5) {
-        result[0] = temp[4];
-        result[1] = temp[3];
-        if (temp[2] != '0') {
-            result[2] = '.';
-            result[3] = temp[2];
-            result[4] = 'k';
-        } else {
-            result[2] = 'k';
-        }
-        return;
-    }
-}
-
-static void prv_on_health_data(HealthEventType type, void *context) {
-	if(health_is_available() && window) {
+// Local callback called by health module when steps update is available.
+static void img999_on_health_update(int steps) {
+	if (window) {
 		char buffer[7] = {0};
-		abbrevSteps(health_get_metric_sum(HealthMetricStepCount), buffer);
+		health_abbrev_steps(steps, buffer);
 		snprintf(steps_buffer, sizeof(steps_buffer), "%s", buffer);
 	} else {
 		snprintf(steps_buffer, sizeof(steps_buffer), "000");
 	}
-	updateComplications();
-}
-
-void health_init() {
-	s_health_available = health_service_events_subscribe(prv_on_health_data, NULL);
+	updateComplications(&settings, day_text_layer, date_text_layer, day_buffer, dateText, dayDate_buffer, month_buffer, short_date_buffer, steps_buffer);
 }
   
+int is_active_time(int start_hour, int end_hour) {
+    // Get current time
+    time_t now = time(NULL);
+    struct tm *current = localtime(&now);
+    int current_hour = current->tm_hour; // 24-hour format (0-23)
+    int current_min = current->tm_min;   // Minutes (0-59)
+
+    // Convert times to total minutes since midnight (no minutes in input, so use 0)
+    int start_total_min = start_hour * 60;
+    int end_total_min = end_hour * 60;
+    int current_total_min = current_hour * 60 + current_min;
+
+    // Check if time range crosses midnight
+    if (start_total_min <= end_total_min) {
+        // No midnight crossover (e.g., 7 to 13 for 7 AM to 1 PM)
+        // Return 1 if current time is within [start, end)
+        return current_total_min >= start_total_min && current_total_min < end_total_min;
+    } else {
+        // Midnight crossover (e.g., 22 to 2 for 10 PM to 2 AM)
+        // Return 1 if current time is after start or before end
+        return current_total_min >= start_total_min || current_total_min < end_total_min;
+    }
+}
+
+static void vibration_handler(void *context) {  
+	if (loopCounter <= loopCount) {
+		vibes_enqueue_custom_pattern(get_vibe_pattern());
+		vibration_timer = app_timer_register(vibration_delay, vibration_handler, NULL);
+		vibration_timer_active = true;
+		loopCounter++;
+	} else {
+		loopCounter = 0;
+		loopCount = 0;
+		vibration_timer_active = false;
+	}
+}
+
 void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
 	static char date_buffer[6];
@@ -697,16 +551,40 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     // Update the text layers
     text_layer_set_text(hour_text_layer, s_hour_buffer);  // Set only the hours
     text_layer_set_text(minute_text_layer, s_minute_buffer);  // Set only the minutes
-
-    // Handle sleep mode logic
-    // int hour = tick_time->tm_hour;
-    int seconds = tick_time->tm_sec;
     int minutes = tick_time->tm_min;
+	int seconds = tick_time->tm_sec;
 
-    // Vibrate every hour if enabled
-    if (minutes == 0 && seconds == 0 && settings.hourlyvibe == 1) {
-        vibes_enqueue_custom_pattern(vibe_pattern);
-    }
+    // Vibrate if enabled
+	bool active = is_active_time(settings.startTime, settings.endTime);
+	if(!vibration_timer_active && active && seconds == 0) {
+
+	if (settings.hourlyVibe == 2 && minutes == 0) {
+		loopCount = 0;
+		vibration_timer = app_timer_register(vibration_delay, vibration_handler, NULL);
+		vibration_timer_active = true;
+	} else if (settings.hourlyVibe == 1 && minutes%15 == 0) {
+		switch (minutes) {
+			case 0:
+				loopCount = 3;
+				break;
+			case 15:
+				loopCount = 0;
+				break;
+			case 30:
+				loopCount = 1;
+				break;
+			case 45:
+				loopCount = 2;
+				break;
+			default:
+				loopCount = 0;
+				break;
+		}
+		vibration_timer = app_timer_register(vibration_delay, vibration_handler, NULL);
+		vibration_timer_active = true;
+	}
+	
+}
 }
 
 uint8_t adjustHeight(int16_t offset_start, int16_t offset_end, int16_t height) {
@@ -802,7 +680,7 @@ static void window_load(Window *window) {
 	text_layer_set_background_color(info_text_layer, GColorBlack);
 	text_layer_set_text_color(info_text_layer, GColorWhite);
 
-	updateLayout();
+	apply_layout_from_settings();
 
 	hour_text_layer = text_layer_create(GRect(hour_x, hour_y, hour_width, hour_height));
 	text_layer_set_background_color(hour_text_layer, GColorClear);
@@ -884,7 +762,7 @@ static void window_unload(Window *window) {
 	text_layer_destroy(date_text_layer);
 	text_layer_destroy(day_text_layer);
 	text_layer_destroy(info_text_layer);
-	health_service_events_unsubscribe();
+	health_deinit();
 	tick_timer_service_unsubscribe();
 	app_message_deregister_callbacks();
 	#ifndef PBL_PLATFORM_APLITE
@@ -904,7 +782,7 @@ static void init(void) {
 		.load = window_load,
 		.unload = window_unload,
 	});
-	health_init();
+	health_init(img999_on_health_update);
 	window_stack_push(window, true);
 	tick_timer_service_subscribe(MINUTE_UNIT, (TickHandler) tick_handler);	
 

@@ -200,13 +200,54 @@ module.exports = [
                     }
                 ]
             },
+			{
+			  "type": "select",
+			  "messageKey": "hourlyVibe",
+			  "defaultValue": "0",
+			  "label": "Time Vibration",
+			  "description": "Vibrate every hour or quarter hour",
+			  "options": [
+			    {
+			      "label": "Never",
+			      "value": "0"
+			    },
+			    {
+			      "label": "Every Quarter Hour",
+			      "value": "1"
+			    },
+			    {
+			      "label": "Every Hour",
+			      "value": "2"
+			    }
+			  ]
+			},
             {
-                "type": "toggle",
-                "messageKey": "hourlyvibe",
-                "label": "Hourly Vibration",
-                "description": "Vibrate on the Hour",
-                "defaultValue": true
-            },
+				"type": "toggle",
+				"messageKey": "vibeStrong",
+				"label": "Vibration Strength",
+				"description": "Off for a gentle vibe, On for a strong vibe",
+				"defaultValue": false,
+			},
+			{
+				"type": "slider",
+				"messageKey": "startTime",
+				"defaultValue": 7,
+				"label": "Watch Face Start Time",
+				"description": "Set the hour the watch face becomes active (e.g., 7 = 7 AM)",
+				"min": 0,
+				"max": 23,
+				"step": 1
+			},
+			{
+				"type": "slider",
+				"messageKey": "endTime",
+				"defaultValue": 22,
+				"label": "Watch Face End Time",
+				"description": "Set the hour the watch face becomes inactive (e.g., 22 = 10 PM)",
+				"min": 0,
+				"max": 23,
+				"step": 1
+			},
             {
                 "type": "submit",
                 "defaultValue": "Save Settings"
