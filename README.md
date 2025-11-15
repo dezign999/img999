@@ -19,7 +19,7 @@ Copy a theme code and ensure it ends in "999" to work correctly. Paste it into t
 Try this Yoshi theme (Color):   
 ```https://i.postimg.cc/0QH1rMWr/IMG-4535.jpg*16777215*16755370*2*21760*0*999```
 
-Yoshi theme (Black & White):
+Yoshi theme (Black & White):   
 ```https://i.postimg.cc/0QH1rMWr/IMG-4535.jpg*0*0*3*16777215*0*999```
 
 ### Image Hosting
