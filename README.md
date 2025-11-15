@@ -16,8 +16,11 @@ Share your theme with others by copying the custom theme code at the bottom of t
 ### Applying a Theme
 Copy a theme code and ensure it ends in "999" to work correctly. Paste it into the URL box in the img999 settings page and save the changes to see the results. Complications are not shared as they are set to a user's personal preference. Therefore, your complications will persist and only the colors, layout and image will change.
 
-Try this Yoshi theme:   
+Try this Yoshi theme (Color):   
 ```https://i.postimg.cc/0QH1rMWr/IMG-4535.jpg*16777215*16755370*2*21760*0*999```
+
+Yoshi theme (Black & White):   
+```https://i.postimg.cc/0QH1rMWr/IMG-4535.jpg*0*0*3*16777215*0*999```
 
 ### Image Hosting
 It's recommended that you create a free user account at http://postimages.org to host your images. Creating an account allows you to manage image libraries that you can copy direct links to directly from the Pebble settings page.
