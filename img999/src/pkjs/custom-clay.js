@@ -22,6 +22,10 @@ module.exports = function(minified) {
             try {	
                 clayConfig.getItemById('themeCode').set("<span style=\"word-break: break-all;\">" + sUrl + "*" + sHourColor + "*" + sMinuteColor + "*" + sGradient + "*" + sGradColor + "*" + sLayout + "*999</span>");	
             } catch (e) {}
+        } else if (sUrl === "") {
+            try {	
+                clayConfig.getItemById('themeCode').set("No URL Detected");
+            } catch (e) {}
         }
 
         try {
